@@ -329,17 +329,18 @@
   (begin
     (asserts! (is-contract-owner) ERR-NOT-AUTHORIZED)
     (asserts! (is-verifier verifier) ERR-INVALID-VERIFIER)
-    
-    (match (map-get? authorized-verifiers { verifier: verifier })
-      verifier-info 
+
+    ;; Get the verifier info, unwrap will succeed because of the assert above
+    (let ((verifier-info (unwrap! (map-get? authorized-verifiers { verifier: verifier }) ERR-INVALID-VERIFIER)))
+        ;; Deactivate the verifier by setting active to false
         (map-set authorized-verifiers
           { verifier: verifier }
           (merge verifier-info { active: false })
         )
-      (err ERR-INVALID-VERIFIER)
+        ;; The map-set returns (ok true), but we ignore it here.
     )
     
-    (ok true)
+    (ok true) ;; Return success for the function call
   )
 )
 
@@ -633,13 +634,12 @@
       true
     )
     
-    ;; Mark the asset as locked and add a note that it's retired
+    ;; Mark the asset as locked to signify retirement
     (map-set assets
       { asset-id: asset-id }
       (merge asset 
         { 
-          locked: true,
-          description: (concat (get description asset) " [RETIRED]")
+          locked: true
         }
       )
     )
